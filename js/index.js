@@ -8,23 +8,23 @@ const ctx = myCanvas.getContext('2d');
 let score = 0;
 let isOver = false;
 const img = new Image();
-    img.src = './images/background.png'
+    img.src = './images/backgroundext.png'
     // ctx.fillStyle = '#00FFFF';
 const backgroundImg = {
     img: img,
     x: 0,
-    speed: -1,
+    speed: 1,
     move: function(){
-        this.x += this.speed;
+        // this.x += this.speed;
         this.x %= myCanvas.width; 
     },
     draw: function(){
-        ctx.drawImage(this.img,this.x,0, 1200, 500)
+        ctx.drawImage(this.img,this.x,0, 6656, 468)
         // ctx.drawImage(this.img, this.x, 0);
         if (this.speed < 0){
-            ctx.drawImage(this.img, this.x + myCanvas.width, 0,1200,500);
+            ctx.drawImage(this.img, this.x + myCanvas.width, 0,6656,468);
         }else{
-            ctx.drawImage(this.img, this.x - this.img.width,0,1200, 500)
+            ctx.drawImage(this.img, this.x - this.img.width,0,6656, 468)
         };
     }
 }
@@ -36,7 +36,7 @@ function drawBackground(){
     // 500 ===> is the height of the canvas which I also get from index.html 
     backgroundImg.move();
     // ctx.fillRect(0,0, 1000, 500);
-    ctx.clearRect(0, 0, 100, 500);
+    ctx.clearRect(0, 0, 6656, 468);
     backgroundImg.draw();
     //add some text
     ctx.fillStyle = 'Green';
@@ -44,109 +44,226 @@ function drawBackground(){
     ctx.fillText(`Score: ${score}`, 800 , 50);
 }
 
-// drawBackground();
-const fireballImg = new Image();
-const marioImg = new Image();
+//create player
+let player = {
+    color: "#00A",
+    x: 220,
+    y: 380,
+    width: 80,
+    height: 80,
+    speedX : 0,
+    speedY : 0,
+    image: './images/player.png',
+    draw: function (){
+        const playerImg = new Image();
+        playerImg.src = this.image;
+        // ctx.fillStyle = this.color;
+        // ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.drawImage(playerImg, this.x, this.y, this.width, this.height)
+    },
+    newPos: function(){
+        player.x += player.speedX;
+        // player.y += player.speedY;
+    },
+    shoot: function (){
+        console.log('pew pew');
+        let bulletPosition = this.weapon();
+        playerBullets.push(Bullet({
+            speed:3,
+            x: bulletPosition.x,
+            y: bulletPosition.y
+        }))
+    },
+    weapon: function (){
+        return {
+            x: this.x + (this.width - 10),
+            y: this.y + (this.height - 51)
+        };
+    }
+};
 
-// "src" has to point as the image is used in HTML file
-fireballImg.src = './images/fireball.png';
-marioImg.src = './images/mario.png';
+//empty array to store bullets
+let playerBullets = [];
+//a constructor to create bullet instances
+function Bullet (e){
+    e.active = true;
+    e.xVelocity = e.speed;
+    e.yVelocity = 0;
+    e.width = 3;
+    e.height = 3;
+    e.color = "red";
+    //set boundaries for bullets
+    e.inBounds = function(){
+        return e.x >= 0 && e.x <= 6656
+            && e.y >= 0 && e.y <= 468;
+    };
+    e.draw = function (){
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    };
+    e.update = function(){
+        e.x += e.xVelocity;
+        e.y += e.yVelocity;
 
-let fireballX = 800;
-let fireballY = 200;
+        e.active = e.active && e.inBounds();
+    }
+    return e;
+}
 
-let marioX = 0;
-let marioY = 200;
+//empty array to store enemies
+let enemies = [];
 
-//move superman
+//a constructor to create enemies instances
+function Enemy (e){
+    e = e || {};
+    //set the current active enemy to true
+    e.active = true;
+    // e.age = Math.floor(Math.random() * 16384);
+    e.color = "blue";
+    //position of enemy in canvas
+    e.x = 1200;
+    e.y = 380;
+    e.xVelocity = 1;
+    //enemy in measures
+    e.width = 80;
+    e.height = 80;
+    //keep enemies in bounds
+    e.inBounds = function(){
+        return e.x >= 0 && e.x <= 6656
+            && e.y >= 0 && e.y <= 468;
+    };
+    e.draw =  function (){
+        ctx.fillStyle = this.color;
+        ctx.fillRect(this.x, this.y, this.width, this.height);
+    };
+    e.update = function (){
+        //enemy starts at position x which changes negatively
+        e.x -= e.xVelocity;
+        e.xVelocity = 1; 
+        //keep enemies in bounds
+        e.active = e.active && e.inBounds();
+    };
+    e.die = function(){
+        this.active = false;
+    };
+    return e;
+};
+
+function moveForward(){
+    player.x += 10;
+    console.log('Front')
+}
+function moveBackwards(){
+    player.x -=10;
+    console.log('back')
+}
+
+//move player
 document.onkeydown = function(event){
     // console.log(event.keyCode);
     switch(event.keyCode){
-        case 37:// left
-            marioX -= 10;
+        case 37:// back
+            moveBackwards();
             break;
-        case 39: // right
-            marioX += 10;
+        case 39: // front
+            moveForward();
             break;
-        case 38: // up
-            marioY -= 10;
-            break; 
-        case 40: // down
-            marioY += 10;
+        // case 38: // jump
+        //     marioY -= 10;
+        //     break; 
+        case 16: // shoot
+            player.shoot()
             break;
     }
 }
 
-//animate the canvas
- 
-function drawingLoop(){
-    //erase the whole canvas before drawing again
-    ctx.clearRect(0, 0, 1200, 500);
+//stop player
+document.onkeyup =  function (event){
+    stopMove();
+  }
+  function stopMove(){
+    player.speedX = 0;
+    player.speedY = 0;
+ }
 
-    drawBackground();
-    // start moving fireball by changing it X coordinate in every loop call
-    fireballX -= 5;
-    // when the fireball disappears from the canvas
-    if(fireballX < -50){
-        // set its x again to fireballX=1000
-        fireballX = 1200;
-        // and for each ball pick random Y in range 0 to 450 (which is height of the canvas - the height of the fireball)
-        fireballY = Math.floor(Math.random() * 400);
+//draw everything in canvas
+function drawEverything(){
+    //add the new position of the bullet to the update step
+    playerBullets.forEach(function(bullet){
+        bullet.update();
+    });
+    //filter the list of bullet to only add the active bullets
+    playerBullets = playerBullets.filter(function(bullet){
+        return bullet.active;
+    });
+    
+    //add the new enemy to the array of enemies
+    enemies.forEach(function(enemy){
+        enemy.update();
+    });
+    //filter the list of enemies to only add the active enemy
+    enemies = enemies.filter(function(enemy){
+        return enemy.active;
+    });
+
+    
+}
+
+//animate the canvas 
+function updateMyBoard(){
+        //erase the whole canvas before drawing again
+        ctx.clearRect(0, 0, 6656, 468);
+        //draw moving background
+        drawBackground();
+        //draw player
+        player.draw();
+        player.newPos();
+        playerBullets.forEach(function(bullet){
+            bullet.draw();
+        });
+        
+        drawEverything()
+        // as long as isOver stays false, keep redrawing; 
+        if(isOver === false){
+            //re-draw the whole scene
+            requestAnimationFrame(function(){
+            //sets up a recursive loop (function calls itself multiple times)
+            updateMyBoard();
+        })
     }
-
-    drawEverything()
-    // as long as isOver stays false, keep redrawing; 
-    if(isOver === false){
-    //re-draw the whole scene
-    requestAnimationFrame(function(){
-        //sets up a recursive loop (function calls itself multiple times)
-        drawingLoop();
+}
+//rectangular collision detection algorithm
+function checkCollision (obj1,obj2){
+    return obj1.y +  obj1.height - 10  >= obj2.y
+        && obj1.y <= obj2.y + obj2.height
+        && obj1.x +  obj1.width - 10 >= obj2.x
+        && obj1.x <= obj2.x + obj2.width
+}
+// check for collisions
+function handleCollisions(){
+    playerBullets.forEach(function(bullet){
+        enemies.forEach(function(enemy){
+            if (checkCollision(bullet, enemy)){
+                enemy.die();
+                bullet.active = false;
+            }
+        });
+    });
+    enemies.forEach(function(enemy){
+        if (checkCollision(enemy, player)){
+            //double check how to kill player
+            gameOver();
+        }
     })
 }
-}
 
-function drawEverything(){
-    
-    ctx.drawImage(fireballImg,fireballX, fireballY, 80, 80);
-
-    ctx.drawImage(marioImg, marioX, marioY, 150, 150);
-
-    if (checkCollision(marioX,marioY, fireballX, fireballY)){
-        // console.log('crashed!!!')
-        gameOver();
-    }
-
-    // manage the score here
-    if(fireballX === 0){
-        score++;
-    }
-}
-// all 4 conditions need to be true in order to return true 
-function checkCollision (obj1x, obj1y, obj2x, obj2y){
-    // supermanY + superman-height >= fireballY
-    return obj1y + 150 - 30 >= obj2y
-        // supermanY <= fireballY + fireball-height
-        && obj1y <= obj2y + 80
-        // supermanX + superman-width >= fireballX
-        && obj1x + 150 - 50 >= obj2x
-        // supermanX <= fireballX + fireball-width
-        && obj1x <= obj2x + 50
-}
 
 function gameOver(){
-    // clear the canvas because I don't want to see alive superman and the fireball
-    ctx.clearRect(0,0, 1200, 500)
+    // clear the canvas 
+    ctx.clearRect(0,0, 6656, 468)
     // redraw the background
     drawBackground();
-    // create defeated_superman image
-    const defeatedMario = new Image();
-    // point to the src where is the image itself
-    defeatedMario.src = "./images/defeated-mario.png"
-    //load defeteated superman img with coordinates x,y
-    defeatedMario.onload = function (){
-        ctx.drawImage(defeatedMario, 480, 290, 150, 150)
-    }
-    //// change the value of isOver to true to finish the game
+    // change the value of isOver to true to finish the game
     isOver = true;
     //display Game Over
     ctx.font = 'bold 70px Arial';
@@ -155,4 +272,21 @@ function gameOver(){
 }
 
 // call drawingLoop() to start looping (after this point it will recursively call itself)
-drawingLoop();
+updateMyBoard();
+
+/**
+ * Returns a number whose value is limited to the given range.
+ *
+ * Example: limit the output of this computation to between 0 and 255
+ * <pre>
+ * (x * 255).clamp(0, 255)
+ * </pre>
+ *
+ * @param {Number} min The lower boundary of the output range
+ * @param {Number} max The upper boundary of the output range
+ * @returns A number in the range [min, max]
+ * @type Number
+ */
+Number.prototype.clamp = function(min, max) {
+    return Math.min(Math.max(this, min), max);
+};
