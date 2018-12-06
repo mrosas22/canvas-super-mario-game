@@ -215,10 +215,6 @@ function drawEverything(){
     //check for collisions
     handleCollisions();
 
-    //push enemies to array
-    // if (myBoard.frames % 120 === 0){
-    //     enemies.push(Enemy());
-    // }
     
 }
 
