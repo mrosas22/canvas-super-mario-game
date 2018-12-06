@@ -46,7 +46,7 @@ function drawBackground(){
 
 //create player
 let player = {
-    color: "#00A",
+    // color: "#00A",
     x: 220,
     y: 380,
     width: 80,
@@ -111,17 +111,16 @@ function Bullet (e){
 }
 
 //empty array to store enemies
-let enemies = [];
+let enemies = [new Enemy(),new Enemy()];
 
 //a constructor to create enemies instances
 function Enemy (e){
     e = e || {};
     //set the current active enemy to true
     e.active = true;
-    // e.age = Math.floor(Math.random() * 16384);
-    e.color = "blue";
     //position of enemy in canvas
-    e.x = 1200;
+    // e.x = 1200;
+    e.x = Math.floor(Math.random() * 1200)
     e.y = 380;
     e.xVelocity = 1;
     //enemy in measures
@@ -132,10 +131,14 @@ function Enemy (e){
         return e.x >= 0 && e.x <= 6656
             && e.y >= 0 && e.y <= 468;
     };
-    e.draw =  function (){
-        ctx.fillStyle = this.color;
-        ctx.fillRect(this.x, this.y, this.width, this.height);
-    };
+    e.image= './images/enemy.png';
+    e.draw = function (){
+        const enemyImg = new Image();
+        enemyImg.src = this.image;
+        // ctx.fillStyle = this.color;
+        // ctx.fillRect(this.x, this.y, this.width, this.height);
+        ctx.drawImage(enemyImg, this.x, this.y, this.width, this.height)
+    },
     e.update = function (){
         //enemy starts at position x which changes negatively
         e.x -= e.xVelocity;
@@ -199,13 +202,23 @@ function drawEverything(){
     
     //add the new enemy to the array of enemies
     enemies.forEach(function(enemy){
+        console.log("ENEMY UPDATED!!!", enemy);
         enemy.update();
     });
-    //filter the list of enemies to only add the active enemy
+    // filter the list of enemies
     enemies = enemies.filter(function(enemy){
         return enemy.active;
+    })
+    enemies.forEach(function(enemy){
+            enemy.draw();
     });
+    //check for collisions
+    handleCollisions();
 
+    //push enemies to array
+    // if (myBoard.frames % 120 === 0){
+    //     enemies.push(Enemy());
+    // }
     
 }
 
