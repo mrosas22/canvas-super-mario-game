@@ -26,6 +26,13 @@ window.onload = function (){
       clear : function (){
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       },
+      score: function() {
+		points = (Math.floor(this.frames/120))
+		this.context.font = '18px serif';
+		this.context.fillStyle = 'green';
+		this.context.fillText('Score: '+points, 800, 50);
+	    },
+
       stop: function(){
         clearInterval(this.interval);
       }
@@ -80,7 +87,6 @@ window.onload = function (){
         this.y += this.speedY;
       };
       this.shoot =  function (){
-        console.log('pew pew');
         let bulletPosition =  this.weapon ();
         playerBullets.push(Bullet({
           speed: 3,
@@ -178,7 +184,7 @@ window.onload = function (){
       myGameArea.frames +=1;
       if (myGameArea.frames % 120 === 0) {
         x = myGameArea.canvas.width;
-        height = Math.floor(Math.random()* x);
+        randomNum = Math.floor(Math.random()* x);
         enemies.push(new Enemy(80, 80, "green", x, 380));
       }
       //add the new enemy to the array of enemies
@@ -195,6 +201,7 @@ window.onload = function (){
   
       player.newPos();
       player.update();
+      myGameArea.score();
       playerBullets.forEach(function(bullet){
         bullet.draw();
       });
@@ -205,11 +212,9 @@ window.onload = function (){
     //move player
     function moveForward(){
         player.speedX += 1;
-        console.log('Front')
     }
     function moveBackwards(){
         player.speedX -=1;
-        console.log('back')
     }
       
     document.onkeydown = function(event){
@@ -222,7 +227,7 @@ window.onload = function (){
                 moveForward();
                 break;
             // case 38: // jump
-            //     marioY -= 10;
+            //     player.speedY -= 10;
             //     break; 
             case 16: // shoot
                 player.shoot()
