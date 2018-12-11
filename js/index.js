@@ -2,15 +2,28 @@ window.onload = function (){
     document.getElementById('start-button').onclick = function(){
       startGame();
     }
-  
+    let lastTime;
     function startGame (){
       myGameArea.start();
+      let now = Date.now();
+      let dt =  (now - lastTime) / 1000.0;
+    //   update();
+    //   drawEverything();
+        
       //call the Player class to create the player
       player = new Player (80, 80, 220, 380)
+      lastTime = now;
+    //   requestAnimationFrame(startGame);
     }
     //global variables
     let enemies = [];
-    let isOver = false;
+    let lastFire = Date.now();
+    let gameTime = 0;
+    let isGameOver;
+    let terrainPattern;
+
+    let score = 0;
+    let scoreEl = document.getElementById('score');
     //create game area
     let myGameArea = {
       canvas : document.getElementById('my-canvas'),
@@ -19,19 +32,19 @@ window.onload = function (){
         this.canvas.height = 468;
         this.context = this.canvas.getContext ('2d');
         //schedule updates
-        this.interval = setInterval(updateGameArea, 20);
+        this.interval = setInterval(update, 20);
       },
       frames: 0,
       //clear the canvas
       clear : function (){
         this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
       },
-      score: function() {
-		points = (Math.floor(this.frames/120))
-		this.context.font = '18px serif';
-		this.context.fillStyle = 'green';
-		this.context.fillText('Score: '+points, 800, 50);
-	    },
+    //   score: function() {
+	// 	points = (Math.floor(this.frames/120))
+	// 	this.context.font = '18px serif';
+	// 	this.context.fillStyle = 'green';
+	// 	this.context.fillText('Score: '+points, 800, 50);
+	//     },
 
       stop: function(){
         clearInterval(this.interval);
@@ -60,12 +73,8 @@ window.onload = function (){
       //clear canvas
       ctx.clearRect(0, 0, 6656, 468);
       backgroundImg.draw();
-      //add some text
-      // ctx.fillStyle = 'Green';
-      // ctx.font = '30px Arial';
-      // ctx.fillText(`Score: ${score}`, 800 , 50);
+     
   }
-  
   
     //create player
     function Player (width, height, x, y){
@@ -160,63 +169,23 @@ window.onload = function (){
         }
         return e;
     }
-  
-    //draw eveything in canvas
-    function drawEverything(){
-      //add the new position of the bullet to the update step
-      playerBullets.forEach(function(bullet){
-          bullet.update();
-      });
-      //filter the list of bullet to only add the active bullets
-      playerBullets = playerBullets.filter(function(bullet){
-          return bullet.active;
-      });
-      
-      //check for collisions
-      handleCollisions();
+    //update game objects
+    function update (){
+        // gameTime += dt;
+        updateGameArea();
+        //check for collisions
+        handleCollisions();
+
+        scoreEl.innerHTML = score;
     }
-  
-    //updating the canvas
-    function updateGameArea (){
-      myGameArea.clear();
-      //draw moving background
-      drawBackground();
-      myGameArea.frames +=1;
-      if (myGameArea.frames % 120 === 0) {
-        x = myGameArea.canvas.width;
-        randomNum = Math.floor(Math.random()* x);
-        enemies.push(new Enemy(80, 80, "green", x, 380));
-      }
-      //add the new enemy to the array of enemies
-      enemies.forEach(function(enemy){
-          enemy.update();
-      });
-      // filter the list of enemies
-      enemies = enemies.filter(function(enemy){
-          return enemy.active;
-      })
-      enemies.forEach(function(enemy){
-              enemy.draw();
-      });
-  
-      player.newPos();
-      player.update();
-      myGameArea.score();
-      playerBullets.forEach(function(bullet){
-        bullet.draw();
-      });
-      drawEverything()
-      
-    }
-  
-    //move player
-    function moveForward(){
+    //hanlde input
+     function moveForward(){
         player.speedX += 1;
     }
     function moveBackwards(){
         player.speedX -=1;
     }
-      
+    //move player
     document.onkeydown = function(event){
         // console.log(event.keyCode);
         switch(event.keyCode){
@@ -242,30 +211,85 @@ window.onload = function (){
     player.speedX = 0;
     player.speedY = 0;
     }
-  
-    //rectangular collision detection algorithm
+    
+    //Updating the Scene
+    function updateGameArea (){
+        myGameArea.frames +=1;
+        if (myGameArea.frames % 360 === 0) {
+          x = myGameArea.canvas.width;
+        //   randomNum = Math.floor(Math.random()* );
+          enemies.push(new Enemy(80, 80, "green", x, 380));
+        }
+        
+        drawEverything()
+        
+    }
+    
+      
+       //rectangular collision detection algorithm
     function checkCollision (obj1,obj2){
-      return obj1.y +  obj1.height - 10  >= obj2.y
-          && obj1.y <= obj2.y + obj2.height
-          && obj1.x +  obj1.width - 10 >= obj2.x
-          && obj1.x <= obj2.x + obj2.width
-    }
-    // check for collisions
-    function handleCollisions(){
-      playerBullets.forEach(function(bullet){
-          enemies.forEach(function(enemy){
-              if (checkCollision(bullet, enemy)){
-                  enemy.die();
-                  bullet.active = false;
-              }
+        return obj1.y +  obj1.height - 10  >= obj2.y
+            && obj1.y <= obj2.y + obj2.height
+            && obj1.x +  obj1.width - 10 >= obj2.x
+            && obj1.x <= obj2.x + obj2.width
+      }
+      // check for collisions
+      function handleCollisions(){
+        playerBullets.forEach(function(bullet){
+            enemies.forEach(function(enemy){
+                if (checkCollision(bullet, enemy)){
+                    enemy.die();
+                    bullet.active = false;
+                    // Add score
+                    score += 1;
+                }
+        
+            });
+        });
+        enemies.forEach(function(enemy){
+            if (checkCollision(enemy, player)){
+                gameOver();
+            }
+        })
+        
+      }
+
+    //draw eveything in canvas
+    function drawEverything(){
+        myGameArea.clear();
+        //draw moving background
+        drawBackground();
+        //add the new position of the bullet to the update step
+        playerBullets.forEach(function(bullet){
+        bullet.update();
+        });
+        playerBullets.forEach(function(bullet){
+            bullet.draw();
           });
-      });
-      enemies.forEach(function(enemy){
-          if (checkCollision(enemy, player)){
-              gameOver();
-          }
-      })
+        //filter the list of bullet to only add the active bullets
+        playerBullets = playerBullets.filter(function(bullet){
+            return bullet.active;
+        });
+        //add the new enemy to the array of enemies
+        enemies.forEach(function(enemy){
+            enemy.update();
+        });
+        // filter the list of enemies
+        enemies = enemies.filter(function(enemy){
+            return enemy.active;
+        })
+        enemies.forEach(function(enemy){
+                enemy.draw();
+        });
+    
+        player.newPos();
+        player.update();
+        // myGameArea.score();
+      
+    
     }
+
+
   
     //finish the game
     function gameOver(){
