@@ -1,26 +1,24 @@
 let requestAnimFrame = (function(){
     return window.requestAnimationFrame       ||
-        window.webkitRequestAnimationFrame    ||
-        window.mozRequestAnimationFrame       ||
-        window.oRequestAnimationFrame         ||
-        window.msRequestAnimationFrame        ||
         function(callback){
+            //attempts to render a 60 frames/second.
+            // window.setTimeout(callback, 1000 / 60);
             window.setInterval(callback, 120);
         };
   })();
-  //Global variables
-  let background, controller, spriteSheet, isGameOver;
-  const spriteSize = 116;
-  let enemies = [];
-  let frames = 0;
-  let score = 0;
-  let scoreEl = document.getElementById('score');
+//Global variables
+let background, controller, spriteSheet, isGameOver;
+const spriteSize = 116;
+let enemies = [];
+let frames = 0;
+let score = 0;
+let scoreEl = document.getElementById('score');
   
   //create canvas
   let canvas = document.createElement('canvas');
   let ctx = canvas.getContext('2d');
   canvas.width = 1050;
-  canvas.height = 480;
+  canvas.height = 350;
   
   resources.onReady(init);
   document.body.appendChild(canvas);
@@ -44,23 +42,30 @@ let requestAnimFrame = (function(){
     reset();
     main();
   }
-  //loading resources
-  resources.load([
-    'images/backgroundext.png',
+//loading resources
+resources.load([
     'images/player1.png',
+    'images/backgroundext.png',
     'images/terrain.png'
-  ]);
-  resources.onReady(init);
+]);
+resources.onReady(init);
+
+//A vector for a 2d space
+function Vector(x, y) {
+    this.x = x || 0;
+    this.y = y || 0;
+}
   
-  //Animation constructor function
-  function Animation (frameSet, delay) {
+//Animation constructor function
+function Animation (frameSet, delay) {
         this.count = 0;// Counts the number of game cycles since the last frame change.
         this.delay = delay;// The number of game cycles to wait until the next frame change.
         this.frame = 0;// The value in the sprite sheet of the sprite image / tile to display.
         this.frameIndex = 0;// The frame's index in the current animation frame set.
         this.frameSet = frameSet;// The current animation frame set that holds sprite tile values.
-  };  
-  Animation.prototype = {
+};
+  
+Animation.prototype = {
     change:function(frameSet, delay = 15) {
       if (this.frameSet != frameSet) {// If the frame set is different:
         this.count = 0;// Reset the count.
@@ -69,7 +74,8 @@ let requestAnimFrame = (function(){
         this.frameSet = frameSet;// Set the new frame set.
         this.frame = this.frameSet[this.frameIndex];// Set the new frame value.
     }
-  },
+},
+  
     //Call this on each game cycle
     update:function() {
         this.count ++;// Keep track of how many cycles have passed since the last frame change
@@ -78,7 +84,7 @@ let requestAnimFrame = (function(){
             this.frameIndex = (this.frameIndex == this.frameSet.length - 1) ? 0 : this.frameIndex + 1;
             this.frame = this.frameSet[this.frameIndex];// Change the current frame value
     }
-  },
+},
     draw: function(){
         ctx.drawImage(
             spritesheet.image,
@@ -87,18 +93,19 @@ let requestAnimFrame = (function(){
             Math.floor(player.x), Math.floor(player.y),
             spritesheet.spriteSize, spritesheet.spriteSize);
     }
-  };
+};
   
-  //Create Player
-  function Player(x,y){
-    this.x = x;
-    this.y = y;
-    this.width = 116;
+//Create Player
+function Player(x,y){
+    this.x      = x;
+    this.y      = y;
+    this.width  = 116;
     this.height = 116;
     this.speedX = 0;
     this.speedY = 0;
     this.jumping = true;
     this.animation = new Animation ();
+    Vector.call(this, x, y);
     this.draw = function (){
         this.animation.draw(this.x, this.y)
     };
@@ -119,33 +126,34 @@ let requestAnimFrame = (function(){
           y: this.y + (this.height - 80)
         }
     }  
-  }
-  
-  spriteSheet = {
+}
+Player.prototype = Object.create(Vector.prototype);
+
+spriteSheet = {
     frameSets:[[0], [1, 6], [1, 6]],// standing still, walk right, walk left
     image:new Image()
-  };
-  // Game state
-  let player = new Player(15, 300)
-  
-  //constructor to create enemies instances
-  function Enemy (width, height, color, x, y){
+};
+// Game state
+let player = new Player(15, 15)
+
+//constructor to create enemies instances
+function Enemy (width, height, x, y){
     //set the current active enemy to true
     this.active = true;
-    this.width = width;
+    this.width  = width;
     this.height = height;
-    this.x = x;
-    this.y = y;
+    this.x      = x;
+    this.y      = y;
     this.xVelocity = 1;
     //keep enemies in bounds
     this.inBounds = function(){
         return this.x >= 0 && this.x <= 1050
             && this.y >= 0 && this.y <= 350;
     };
-    this.image= './images/enemy.png';
-    this.draw = function (){
+    this.image  = './images/enemy.png';
+    this.draw   = function (){
         const enemyImg = new Image();
-        enemyImg.src = this.image;
+        enemyImg.src   = this.image;
         ctx.drawImage(enemyImg, this.x, this.y, this.width, this.height)
     },
     this.update = function (){
@@ -158,18 +166,18 @@ let requestAnimFrame = (function(){
         this.active = false;
     };
   
-  };
-  
-  //empty array to store bullets
-  let playerBullets = [];
-  //constructor to create bullet instances
-  function Bullet (e){
-    e.active = true;
+};
+
+//empty array to store bullets
+let playerBullets = [];
+//constructor to create bullet instances
+function Bullet (e){
+    e.active    = true;
     e.xVelocity = e.speed;
     e.yVelocity = 0;
-    e.width = 3;
-    e.height = 3;
-    e.color = "red";
+    e.width     = 3;
+    e.height    = 3;
+    e.color     = "red";
     //set boundaries for bullets
     e.inBounds = function(){
         return e.x >= 0 && e.x <= 1050
@@ -182,13 +190,14 @@ let requestAnimFrame = (function(){
     e.update = function(){
         e.x += e.xVelocity;
         e.y += e.yVelocity;
+  
         e.active = e.active && e.inBounds();
     }
     return e;
-  }
-  
-  //handle input  
-  controller = {
+}
+
+//handle input  
+controller = {
     left:  { active:false, state:false },
     right: { active:false, state:false },
     up:    { active:false, state:false },
@@ -197,14 +206,17 @@ let requestAnimFrame = (function(){
       let keyState = (event.type == "keydown") ? true : false;
       switch(event.keyCode) {
         case 37:// left key
+        // console.log('left')
           if (controller.left.state != keyState) controller.left.active = keyState;
           controller.left.state  = keyState;// Always update the physical state.
         break;
         case 38:// up key
+        // console.log('up')
           if (controller.up.state != keyState) controller.up.active = keyState;
           controller.up.state  = keyState;
         break;
         case 39:// right key
+        // console.log('right')
           if (controller.right.state != keyState) controller.right.active = keyState;
           controller.right.state  = keyState;
         break;
@@ -213,16 +225,16 @@ let requestAnimFrame = (function(){
         break;
       }
     }
-  };
-  //update player position in canvas
-  function updatePlayer(){
+};
+//update player position in canvas
+function updatePlayer(){
     if (controller.up.active && !player.jumping) {
         controller.up.active = false;
         player.jumping = true;
         player.speedY -= 10;
     }
     if (controller.left.active) {
-        //To change the animation call animation.change
+        //To change the animation, all you have to do is call animation.change
         player.animation.change(spriteSheet.frameSets[2], 15);
         player.speedX -= 0.05;
     }
@@ -230,7 +242,7 @@ let requestAnimFrame = (function(){
         player.animation.change(spriteSheet.frameSets[1], 15);
         player.speedX += 0.05;
     }
-    //change the animation to standing still
+    //If you're just standing still, change the animation to standing still
     if (!controller.left.active && !controller.right.active) {
         player.animation.change(spriteSheet.frameSets[0], 20);
     }
@@ -239,7 +251,7 @@ let requestAnimFrame = (function(){
         player.y += player.speedY;
         player.speedX *= 0.9;
         player.speedY *= 0.9;
-    if (player.y + player.height > canvas.height - 4) {
+    if (player.y + player.height > canvas.height - 2) {
         player.jumping = false;
         player.y = canvas.height - 2 - player.height;
         player.speedY = 0;
@@ -249,29 +261,29 @@ let requestAnimFrame = (function(){
     } else if (player.x > canvas.width) {
         player.x = - player.width;
     }
-  }
-  
-  //Game Loop
-  function loop(){
+}
+
+//Game Loop
+function loop(){
     updatePlayer();
     updateGameArea();
     player.run()
     handleCollisions();
     scoreEl.innerHTML = score;
-  }  
-  
-  ////Updating the Scene
-  function updateGameArea (){
+}  
+
+////Updating the Scene
+function updateGameArea (){
     frames +=1;
     if (frames % 360 === 0) {
       x = canvas.width;
       y = Math.random() * (canvas.height - 80)
-      enemies.push(new Enemy(116, 80, "green", x, y));
+      enemies.push(new Enemy(116, 80, x, y));
     }
     drawEverything()
-  }
-  //update enemies and bullets
-  function updateEntities(){
+}
+//update enemies and bullets
+function updateEntities(){
     //add the new position of the bullet to the update step
     playerBullets.forEach(function(bullet){
         bullet.update();
@@ -294,10 +306,10 @@ let requestAnimFrame = (function(){
     enemies.forEach(function(enemy){
             enemy.draw();
     });
-  }
-  
-  //draw eveything in canvas
-  function drawEverything(){
+}
+
+//draw eveything in canvas
+function drawEverything(){
     //we render the background by setting the fillStyle of the context
     ctx.fillStyle = background;
     //and then render the whole canvas with fillRect
@@ -306,17 +318,17 @@ let requestAnimFrame = (function(){
     ctx.drawImage(spriteSheet.image, player.animation.frame * spriteSize, 0, spriteSize, spriteSize, Math.floor(player.x), Math.floor(player.y), spriteSize, spriteSize);
     spriteSheet.image.src = "./images/player1.png";// Start loading the image.
     updateEntities();
-  }
-  
-  //rectangular collision detection algorithm
-  function checkCollision (obj1,obj2){
+}
+
+//rectangular collision detection algorithm
+function checkCollision (obj1,obj2){
     return obj1.y +  obj1.height - 10  >= obj2.y
         && obj1.y <= obj2.y + obj2.height
         && obj1.x +  obj1.width - 10 >= obj2.x
         && obj1.x <= obj2.x + obj2.width
-  }
-  // check for collisions
-  function handleCollisions(){
+}
+// check for collisions
+function handleCollisions(){
     checkPlayerBounds();
     playerBullets.forEach(function(bullet){
         enemies.forEach(function(enemy){
@@ -335,9 +347,9 @@ let requestAnimFrame = (function(){
         }
     })
     
-  }
-  //Avoid player from exiting the canvas
-  function checkPlayerBounds() {
+}
+//Avoid player from exiting the canvas
+function checkPlayerBounds() {
     // Check bounds
     if(player.x < 0) {
         player.x = 0;
@@ -345,29 +357,29 @@ let requestAnimFrame = (function(){
     else if(player.x > canvas.width - player.width) {
         player.x = canvas.width - player.width;
     }
-  
+
     if(player.x < 0) {
         player.y = 0;
     }
     else if(player.y > canvas.height - player.height) {
         player.y = canvas.height - player.height;
     }
-  }
-  // Game over
-  function gameOver() {
+}
+// Game over
+function gameOver() {
     document.getElementById('game-over').style.display = 'block';
     document.getElementById('game-over-overlay').style.display = 'block';
     isGameOver = true;
-  }
-  
-  //Reset game to original state
-  function reset(){
+}
+
+//Reset game to original state
+function reset(){
     //sets all the game state back to the beginning and hides the game over screen
     document.getElementById('game-over').style.display = 'none';
     document.getElementById('game-over-overlay').style.display = 'none';
     window.addEventListener("keydown", controller.keyUpDown);
     window.addEventListener("keyup", controller.keyUpDown);
-  }
+}
   
   
   
