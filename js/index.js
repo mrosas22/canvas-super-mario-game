@@ -273,9 +273,11 @@ function updateGameArea (){
     frames +=1;
     if (frames % 360 === 0) {
       x = canvas.width;
-      reduceCanvas = canvas.height 
       y = Math.random() * (canvas.height - 80)
+      enemies.push(new Enemy(116, 80, x, 170))
+      if (y > 130 && y <= 240){
       enemies.push(new Enemy(116, 80, x, y));
+      }
     }
     drawEverything()
 }
@@ -376,6 +378,7 @@ function reset(){
     document.getElementById('game-over-overlay').style.display = 'none';
     window.addEventListener("keydown", controller.keyUpDown);
     window.addEventListener("keyup", controller.keyUpDown);
+    score = 0;
 }
   
   
