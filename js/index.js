@@ -274,8 +274,8 @@ function updateGameArea (){
     if (frames % 360 === 0) {
       x = canvas.width;
       y = Math.random() * (canvas.height - 80)
-      enemies.push(new Enemy(116, 80, x, 160))
-      if (y > 180 && y <= 240){
+      enemies.push(new Enemy(116, 80, x, 170))
+      if (y > 170 && y <= 240){
       enemies.push(new Enemy(116, 80, x, y));
       }
     }
@@ -338,8 +338,7 @@ function handleCollisions(){
                 score += 1;
             }
             if(score === 10) {
-                alert("YOU WIN, CONGRATULATIONS!");
-                document.location.reload();
+                gameOver();
             }
     
         });
