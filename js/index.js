@@ -46,7 +46,7 @@ let scoreEl = document.getElementById('score');
 resources.load([
     'images/player1.png',
     'images/backgroundext.png',
-    'images/terrain.png'
+    'images/enemy.png'
 ]);
 resources.onReady(init);
 
@@ -76,8 +76,8 @@ Animation.prototype = {
     }
 },
   
-    //Call this on each game cycle
-    update:function() {
+//Call this on each game cycle
+ update:function() {
         this.count ++;// Keep track of how many cycles have passed since the last frame change
         if (this.count >= this.delay) {// If enough cycles have passed, we change the frame
             this.count = 0;// Reset the count
@@ -85,13 +85,13 @@ Animation.prototype = {
             this.frame = this.frameSet[this.frameIndex];// Change the current frame value
     }
 },
-    draw: function(){
-        ctx.drawImage(
-            spritesheet.image,
-            player.animation.frame * spritesheet.spriteSize, 0,
-            spritesheet.spriteSize, spritesheet.spriteSize,
-            Math.floor(player.x), Math.floor(player.y),
-            spritesheet.spriteSize, spritesheet.spriteSize);
+draw: function(){
+    ctx.drawImage(
+        spritesheet.image,
+        player.animation.frame * spritesheet.spriteSize, 0,
+        spritesheet.spriteSize, spritesheet.spriteSize,
+        Math.floor(player.x), Math.floor(player.y),
+        spritesheet.spriteSize, spritesheet.spriteSize);
     }
 };
   
@@ -190,7 +190,6 @@ function Bullet (e){
     e.update = function(){
         e.x += e.xVelocity;
         e.y += e.yVelocity;
-  
         e.active = e.active && e.inBounds();
     }
     return e;
@@ -206,17 +205,14 @@ controller = {
       let keyState = (event.type == "keydown") ? true : false;
       switch(event.keyCode) {
         case 37:// left key
-        // console.log('left')
           if (controller.left.state != keyState) controller.left.active = keyState;
           controller.left.state  = keyState;// Always update the physical state.
         break;
         case 38:// up key
-        // console.log('up')
           if (controller.up.state != keyState) controller.up.active = keyState;
           controller.up.state  = keyState;
         break;
         case 39:// right key
-        // console.log('right')
           if (controller.right.state != keyState) controller.right.active = keyState;
           controller.right.state  = keyState;
         break;
@@ -277,6 +273,7 @@ function updateGameArea (){
     frames +=1;
     if (frames % 360 === 0) {
       x = canvas.width;
+      reduceCanvas = canvas.height 
       y = Math.random() * (canvas.height - 80)
       enemies.push(new Enemy(116, 80, x, y));
     }
