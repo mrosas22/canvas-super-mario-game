@@ -383,6 +383,3 @@ function reset(){
     window.addEventListener("keyup", controller.keyUpDown);
     score = 0;
 }
-  
-  
-  
